@@ -5,9 +5,8 @@ from django.http import JsonResponse
 from django.views.generic import View
 
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -45,13 +44,17 @@ class InstagramView(View):
 
         global lock
         while lock:
-            time.sleep(1)
+            time.sleep(0.5)
 
         lock = True
         try:
-            driver.get(url)
+            driver.execute_script(f"window.open('{url}', '_blank');")
+            driver.switch_to.window(driver.window_handles[-1])
+            WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'pre')))
             content = driver.find_element(By.TAG_NAME, 'pre').text
             parsed_json = json.loads(content)
+            driver.close()
+            driver.switch_to.window(driver.window_handles[0])
         except:
             pass
         lock = False
