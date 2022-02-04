@@ -10,7 +10,8 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-profile_path = r'c:\Users\Edmond\AppData\Roaming\Mozilla\Firefox\Profiles\6244c9sg.default-release'
+# profile_path = r'C:\Users\Edmond\AppData\Roaming\Mozilla\Firefox\Profiles\6244c9sg.default-release'
+profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\n0jnkby3.default-release'
 driver = None
 lock = False
 
