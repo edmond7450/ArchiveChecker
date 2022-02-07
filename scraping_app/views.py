@@ -46,6 +46,7 @@ class InstagramView(View):
         username = request.GET['username']
         url = f'https://www.instagram.com/{username}/?__a=1'
 
+        fbid = ''
         name = ''
         profile_image_url = ''
 
@@ -68,9 +69,10 @@ class InstagramView(View):
 
         try:
             if username == parsed_json['graphql']['user']['username']:
+                fbid = parsed_json['graphql']['user']['fbid']
                 name = parsed_json['graphql']['user']['full_name']
                 profile_image_url = parsed_json['graphql']['user']['profile_pic_url']
         except:
             pass
 
-        return JsonResponse({'status': 200, 'name': name, 'profile_image_url': profile_image_url})
+        return JsonResponse({'status': 200, 'fbid': fbid, 'name': name, 'profile_image_url': profile_image_url})
