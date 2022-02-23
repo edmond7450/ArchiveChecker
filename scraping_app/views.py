@@ -49,10 +49,14 @@ class InstagramView(View):
         fbid = ''
         name = ''
         profile_image_url = ''
+        sleeps = 0
 
         global lock
         while lock:
-            time.sleep(0.5)
+            time.sleep(1)
+            sleeps += 1
+            if sleeps >= 10:
+                return JsonResponse({'status': 500})
 
         lock = True
         try:
