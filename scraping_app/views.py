@@ -55,7 +55,7 @@ class InstagramView(View):
         while lock:
             time.sleep(1)
             sleeps += 1
-            if sleeps >= 10:
+            if sleeps >= 5:
                 return JsonResponse({'status': 500})
 
         lock = True
