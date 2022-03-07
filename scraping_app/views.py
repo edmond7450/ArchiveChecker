@@ -18,7 +18,7 @@ lock = False
 def setDriver():
     global driver
 
-    profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\wsjol8ye.default-release'
+    profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\oex5aocl.default'
     if not os.path.exists(profile_path):
         profile_path = r'C:\Users\Edmond\AppData\Roaming\Mozilla\Firefox\Profiles\6244c9sg.default-release'
     if not os.path.exists(profile_path):
