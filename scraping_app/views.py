@@ -44,9 +44,8 @@ setDriver()
 class InstagramView(View):
     def get(self, request, *args, **kwargs):
         username = request.GET['username']
-        url = f'https://www.instagram.com/{username}/?__a=1'
+        url = f'https://www.instagram.com/{username}/'
 
-        fbid = ''
         name = ''
         profile_image_url = ''
         sleeps = 0
@@ -62,21 +61,16 @@ class InstagramView(View):
         try:
             driver.execute_script(f"window.open('{url}', '_blank');")
             driver.switch_to.window(driver.window_handles[-1])
-            WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'pre')))
-            content = driver.find_element(By.TAG_NAME, 'pre').text
-            parsed_json = json.loads(content)
+            try:
+                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//header')))
+                profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
+                name = driver.find_element(By.XPATH, '//header/section/div[2]/span').text
+            except:
+                pass
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
-        except:
-            pass
+        except Exception as e:
+            print(repr(e))
         lock = False
 
-        try:
-            if username == parsed_json['graphql']['user']['username']:
-                fbid = parsed_json['graphql']['user']['fbid']
-                name = parsed_json['graphql']['user']['full_name']
-                profile_image_url = parsed_json['graphql']['user']['profile_pic_url']
-        except:
-            pass
-
-        return JsonResponse({'status': 200, 'fbid': fbid, 'name': name, 'profile_image_url': profile_image_url})
+        return JsonResponse({'status': 200, 'name': name, 'profile_image_url': profile_image_url})
