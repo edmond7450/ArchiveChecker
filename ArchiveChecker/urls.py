@@ -16,10 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from scraping_app.views import InstagramView
+from scraping_app.views import InstagramView, YouTubeView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('instagram/', InstagramView.as_view(), name='instagram'),
+    path('youtube/', YouTubeView.as_view(), name='youtube'),
 ]

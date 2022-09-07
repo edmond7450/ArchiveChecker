@@ -1,9 +1,10 @@
-import json
 import os.path
 import time
 
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.generic import View
+from pytube import YouTube
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -38,7 +39,7 @@ def setDriver():
         print(e)
 
 
-setDriver()
+# setDriver()
 
 
 class InstagramView(View):
@@ -74,3 +75,21 @@ class InstagramView(View):
         lock = False
 
         return JsonResponse({'status': 200, 'name': name, 'profile_image_url': profile_image_url})
+
+
+class YouTubeView(View):
+    def get(self, request, *args, **kwargs):
+        try:
+            id = request.GET['id']
+            url = f'https://www.youtube.com/watch?v={id}'
+            output_path = settings.BASE_DIR.joinpath('archive_data', id)
+
+            yt = YouTube(url)
+            yt_video = yt.streams.get_highest_resolution()
+            path = yt_video.download(output_path=output_path)
+            file_name = os.path.basename(path)
+
+            return JsonResponse({'status': 200, 'id': id, 'file_name': file_name})
+
+        except Exception as e:
+            return JsonResponse({'status': 400, 'message': repr(e)})
