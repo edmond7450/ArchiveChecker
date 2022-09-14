@@ -1,3 +1,4 @@
+import boto3
 import os.path
 import time
 
@@ -5,12 +6,13 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.views.generic import View
 from pytube import YouTube
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+from my_settings import *
 
 driver = None
 lock = False
@@ -80,16 +82,31 @@ class InstagramView(View):
 class YouTubeView(View):
     def get(self, request, *args, **kwargs):
         try:
-            id = request.GET['id']
-            url = f'https://www.youtube.com/watch?v={id}'
+            environment = request.GET['environment']
+            user_id = request.GET['user_id']
+            account_id = request.GET['account_id']
+            video_id = request.GET['video_id']
+            url = f'https://www.youtube.com/watch?v={video_id}'
             output_path = settings.BASE_DIR.joinpath('archive_data', id)
 
-            yt = YouTube(url)
-            yt_video = yt.streams.get_highest_resolution()
-            path = yt_video.download(output_path=output_path)
-            file_name = os.path.basename(path)
+            try:
+                yt = YouTube(url)
+                yt_video = yt.streams.get_highest_resolution()
+                path = yt_video.download(output_path=output_path)
+                file_name = os.path.basename(path)
+            except Exception as e:
+                return JsonResponse({'status': 401, 'message': repr(e)})
 
-            return JsonResponse({'status': 200, 'id': id, 'file_name': file_name})
+            try:
+                s3_path = f'{environment}/archive_data/{user_id}/YouTube/{account_id}/{file_name}'
+                s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+                bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
+
+                bucket.upload_file(path, s3_path)
+            except Exception as e:
+                return JsonResponse({'status': 402, 'message': repr(e)})
+
+            return JsonResponse({'status': 200, 'video_id': video_id, 'file_name': file_name})
 
         except Exception as e:
             return JsonResponse({'status': 400, 'message': repr(e)})

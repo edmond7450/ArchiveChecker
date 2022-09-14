@@ -2,11 +2,10 @@
 __pycache__/
 
 archive_data/
-
-db.sqlite3
+my_settings.py
 
 *.log
-
+*.sqlite3
 *.sql
 *.csv
 *.json
