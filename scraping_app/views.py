@@ -1,5 +1,5 @@
 import boto3
-import os.path
+import os
 import time
 
 from django.conf import settings
@@ -41,7 +41,7 @@ def setDriver():
         print(e)
 
 
-# setDriver()
+setDriver()
 
 
 class InstagramView(View):
@@ -87,7 +87,7 @@ class YouTubeView(View):
             account_id = request.GET['account_id']
             video_id = request.GET['video_id']
             url = f'https://www.youtube.com/watch?v={video_id}'
-            output_path = settings.BASE_DIR.joinpath('archive_data', id)
+            output_path = settings.BASE_DIR.joinpath('archive_data')
 
             try:
                 yt = YouTube(url)
@@ -99,10 +99,12 @@ class YouTubeView(View):
 
             try:
                 s3_path = f'{environment}/archive_data/{user_id}/YouTube/{account_id}/{file_name}'
-                s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-                bucket = s3.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
+                s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+                bucket = s3.Bucket(AWS_STORAGE_BUCKET_NAME)
 
                 bucket.upload_file(path, s3_path)
+
+                os.remove(path)
             except Exception as e:
                 return JsonResponse({'status': 402, 'message': repr(e)})
 
