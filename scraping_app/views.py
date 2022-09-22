@@ -82,10 +82,12 @@ class InstagramView(View):
 class YouTubeView(View):
     def get(self, request, *args, **kwargs):
         try:
-            environment = request.GET['environment']
-            user_id = request.GET['user_id']
-            account_id = request.GET['account_id']
-            video_id = request.GET['video_id']
+            environment = request.GET['e']
+            user_id = request.GET['u']
+            account_id = request.GET['a']
+            video_id = request.GET['v']
+            archived_at = request.GET['t']
+
             url = f'https://www.youtube.com/watch?v={video_id}'
             output_path = settings.BASE_DIR.joinpath('archive_data')
 
@@ -108,7 +110,7 @@ class YouTubeView(View):
             except Exception as e:
                 return JsonResponse({'status': 402, 'message': repr(e)})
 
-            return JsonResponse({'status': 200, 'video_id': video_id, 'file_name': file_name})
+            return JsonResponse({'status': 200, 'u': user_id, 'a': account_id, 'v': video_id, 't': archived_at, 'file_name': file_name})
 
         except Exception as e:
             return JsonResponse({'status': 400, 'message': repr(e)})
