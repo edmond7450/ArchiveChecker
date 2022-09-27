@@ -110,6 +110,9 @@ class YouTubeView(View):
 
                 path = yt_video.download(output_path=output_path, filename=file_name)
                 file_size = os.path.getsize(path)
+
+            except VideoUnavailable as e:
+                return JsonResponse({'status': 404, 'message': str(e)})
             except Exception as e:
                 return JsonResponse({'status': 401, 'message': repr(e)})
 
@@ -126,7 +129,5 @@ class YouTubeView(View):
 
             return JsonResponse({'status': 200, 'u': user_id, 'a': account_id, 'v': video_id, 's': file_size, 't': now.strftime('%Y-%m-%d %H:%M:%S')})
 
-        except VideoUnavailable as e:
-            return JsonResponse({'status': 404, 'message': str(e)})
         except Exception as e:
             return JsonResponse({'status': 400, 'message': repr(e)})
