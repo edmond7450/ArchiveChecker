@@ -8,6 +8,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.views.generic import View
 from pytube import YouTube
+from pytube.exceptions import VideoUnavailable
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
@@ -125,5 +126,7 @@ class YouTubeView(View):
 
             return JsonResponse({'status': 200, 'u': user_id, 'a': account_id, 'v': video_id, 's': file_size, 't': now.strftime('%Y-%m-%d %H:%M:%S')})
 
+        except VideoUnavailable as e:
+            return JsonResponse({'status': 404, 'message': str(e)})
         except Exception as e:
             return JsonResponse({'status': 400, 'message': repr(e)})
