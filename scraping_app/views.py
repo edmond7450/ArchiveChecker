@@ -88,6 +88,7 @@ class YouTubeView(View):
             user_id = request.GET['u']
             account_id = request.GET['a']
             video_id = request.GET['v']
+            file_size = int(request.GET['s'])
 
             url = f'https://www.youtube.com/watch?v={video_id}'
             output_path = settings.BASE_DIR.joinpath('archive_data')
@@ -100,10 +101,14 @@ class YouTubeView(View):
                 yt = YouTube(url)
                 yt_video = yt.streams.get_highest_resolution()
 
+                if file_size == yt_video.filesize:
+                    return JsonResponse({'status': 200})
+
                 extension = os.path.splitext(yt_video.default_filename)[1]
                 file_name = f"{video_id}--{now.strftime('%Y-%m-%d--%H-%M-%S')}{extension}"
 
                 path = yt_video.download(output_path=output_path, filename=file_name)
+                file_size = os.path.getsize(path)
             except Exception as e:
                 return JsonResponse({'status': 401, 'message': repr(e)})
 
@@ -118,7 +123,7 @@ class YouTubeView(View):
             except Exception as e:
                 return JsonResponse({'status': 402, 'message': repr(e)})
 
-            return JsonResponse({'status': 200, 'u': user_id, 'a': account_id, 'v': video_id, 't': now.strftime('%Y-%m-%d %H:%M:%S')})
+            return JsonResponse({'status': 200, 'u': user_id, 'a': account_id, 'v': video_id, 's': file_size, 't': now.strftime('%Y-%m-%d %H:%M:%S')})
 
         except Exception as e:
             return JsonResponse({'status': 400, 'message': repr(e)})
