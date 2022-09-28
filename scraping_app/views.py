@@ -127,7 +127,7 @@ class YouTubeView(View):
             except Exception as e:
                 return JsonResponse({'status': 402, 'message': repr(e)})
 
-            return JsonResponse({'status': 200, 'u': user_id, 'a': account_id, 'v': video_id, 's': file_size, 't': now.strftime('%Y-%m-%d %H:%M:%S')})
+            return JsonResponse({'status': 200, 'u': user_id, 'a': account_id, 'v': video_id, 'e': extension, 's': file_size, 't': now.strftime('%Y-%m-%d %H:%M:%S')})
 
         except Exception as e:
             return JsonResponse({'status': 400, 'message': repr(e)})
