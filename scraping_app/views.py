@@ -94,27 +94,31 @@ class YouTubeView(View):
             url = f'https://www.youtube.com/watch?v={video_id}'
             output_path = settings.BASE_DIR.joinpath('archive_data')
 
-            try:
-                ssl._create_default_https_context = ssl._create_unverified_context
+            for i in range(1, 4):
+                try:
+                    ssl._create_default_https_context = ssl._create_unverified_context
 
-                now = datetime.utcnow()
+                    now = datetime.utcnow()
 
-                yt = YouTube(url)
-                yt_video = yt.streams.get_highest_resolution()
+                    yt = YouTube(url)
+                    yt_video = yt.streams.get_highest_resolution()
 
-                if file_size == yt_video.filesize:
-                    return JsonResponse({'status': 200})
+                    if file_size == yt_video.filesize:
+                        return JsonResponse({'status': 200})
 
-                extension = os.path.splitext(yt_video.default_filename)[1]
-                file_name = f"{video_id}--{now.strftime('%Y-%m-%d--%H-%M-%S')}{extension}"
+                    extension = os.path.splitext(yt_video.default_filename)[1]
+                    file_name = f"{video_id}--{now.strftime('%Y-%m-%d--%H-%M-%S')}{extension}"
 
-                path = yt_video.download(output_path=output_path, filename=file_name)
-                file_size = os.path.getsize(path)
+                    path = yt_video.download(output_path=output_path, filename=file_name)
+                    file_size = os.path.getsize(path)
+                    break
 
-            except VideoUnavailable as e:
-                return JsonResponse({'status': 404, 'message': str(e)})
-            except Exception as e:
-                return JsonResponse({'status': 401, 'message': repr(e)})
+                except VideoUnavailable as e:
+                    return JsonResponse({'status': 404, 'message': str(e)})
+                except Exception as e:
+                    if i == 3:
+                        return JsonResponse({'status': 401, 'message': repr(e)})
+                    time.sleep(i * 5)
 
             try:
                 s3_path = f'{environment}/archive_data/{user_id}/YouTube/{account_id}/{file_name}'
