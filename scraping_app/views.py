@@ -66,6 +66,7 @@ class InstagramView(View):
         lock = True
         try:
             driver.execute_script(f"window.open('{url}', '_blank');")
+            time.sleep(0.5)
             driver.switch_to.window(driver.window_handles[-1])
             try:
                 WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//header')))
@@ -94,7 +95,7 @@ class YouTubeView(View):
             url = f'https://www.youtube.com/watch?v={video_id}'
             output_path = settings.BASE_DIR.joinpath('archive_data')
 
-            for i in range(1, 4):
+            for i in range(4):
                 try:
                     ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -118,7 +119,7 @@ class YouTubeView(View):
                 except Exception as e:
                     if i == 3:
                         return JsonResponse({'status': 401, 'message': repr(e)})
-                    time.sleep(i * 5)
+                    time.sleep(10 + i * 5)
 
             try:
                 s3_path = f'{environment}/archive_data/{user_id}/YouTube/{account_id}/{file_name}'
