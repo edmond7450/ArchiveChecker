@@ -119,7 +119,7 @@ class YouTubeView(View):
                 except Exception as e:
                     if i == 3:
                         return JsonResponse({'status': 401, 'message': repr(e)})
-                    time.sleep(10 + i * 5)
+                    time.sleep(10 + i * 10)
 
             try:
                 s3_path = f'{environment}/archive_data/{user_id}/YouTube/{account_id}/{file_name}'
