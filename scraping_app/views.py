@@ -86,11 +86,24 @@ class InstagramView(View):
 class YouTubeView(View):
     def get(self, request, *args, **kwargs):
         try:
-            environment = request.GET['e']
-            user_id = request.GET['u']
-            account_id = request.GET['a']
+            environment = request.GET.get('e')
+            user_id = request.GET.get('u')
+            account_id = request.GET.get('a')
             video_id = request.GET['v']
-            file_size = int(request.GET['s'])
+            if request.GET.get('s'):
+                file_size = int(request.GET['s'])
+            else:
+                file_size = 0
+
+            if not account_id:
+                s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+                s3_path = f'YouTube/{video_id}.mp4'
+                try:
+                    response = s3.head_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=s3_path)
+
+                    return JsonResponse({'status': 200, 'v': video_id, 's': response['ContentLength'], 't': response['LastModified'].strftime('%Y-%m-%d %H:%M:%S')})
+                except:
+                    pass
 
             url = f'https://www.youtube.com/watch?v={video_id}'
             output_path = settings.BASE_DIR.joinpath('archive_data')
@@ -108,7 +121,10 @@ class YouTubeView(View):
                         return JsonResponse({'status': 200})
 
                     extension = os.path.splitext(yt_video.default_filename)[1]
-                    file_name = f"{video_id}--{now.strftime('%Y-%m-%d--%H-%M-%S')}{extension}"
+                    if account_id:
+                        file_name = f"{video_id}--{now.strftime('%Y-%m-%d--%H-%M-%S')}{extension}"
+                    else:
+                        file_name = f"{video_id}{extension}"
 
                     path = yt_video.download(output_path=output_path, filename=file_name)
                     file_size = os.path.getsize(path)
@@ -122,7 +138,11 @@ class YouTubeView(View):
                     time.sleep(10 + i * 10)
 
             try:
-                s3_path = f'{environment}/archive_data/{user_id}/YouTube/{account_id}/{file_name}'
+                if account_id:
+                    s3_path = f'{environment}/archive_data/{user_id}/YouTube/{account_id}/{file_name}'
+                else:
+                    s3_path = f'YouTube/{file_name}'
+
                 s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
                 bucket = s3.Bucket(AWS_STORAGE_BUCKET_NAME)
 
