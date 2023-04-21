@@ -200,6 +200,9 @@ def get_download_url(id, video_url):
     }
 
     response = requests.post('https://ssstik.io/abc', params=params, cookies=cookies, headers=headers, data=data)
+    if response.text == '':
+        time.sleep(5)
+        response = requests.post('https://ssstik.io/abc', params=params, cookies=cookies, headers=headers, data=data)
 
     soup = BeautifulSoup(response.text, 'html.parser')
     video_title = soup.p.getText().strip()
