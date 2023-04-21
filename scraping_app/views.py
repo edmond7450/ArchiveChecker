@@ -217,12 +217,10 @@ class TikTokView(View):
             environment = request.GET.get('e')
             user_id = request.GET.get('u')
             account_id = request.GET.get('a')
+            video_id = request.GET['i']
             video_url = request.GET['v']
 
-            video_id = os.path.basename(video_url)
-            video_id = video_id[:video_id.find('?')]
-
-            file_name = f"{video_id}.mp4"
+            file_name = f'{video_id}.mp4'
             path = settings.BASE_DIR.joinpath('archive_data', file_name)
 
             s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
