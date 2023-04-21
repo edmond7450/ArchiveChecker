@@ -1,4 +1,6 @@
 boto3
+bs4
 Django
 pytube
+requests
 selenium

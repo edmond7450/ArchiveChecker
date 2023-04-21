@@ -1,8 +1,11 @@
 import boto3
 import os
+import requests
 import ssl
 import time
+import urllib.request
 
+from bs4 import BeautifulSoup
 from datetime import datetime
 from django.conf import settings
 from django.http import JsonResponse
@@ -26,9 +29,7 @@ def setDriver():
 
     profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\oex5aocl.default'
     if not os.path.exists(profile_path):
-        profile_path = r'C:\Users\Edmond\AppData\Roaming\Mozilla\Firefox\Profiles\6244c9sg.default-release'
-    if not os.path.exists(profile_path):
-        profile_path = r'C:\Users\Denis\AppData\Roaming\Mozilla\Firefox\Profiles\qpx5ocgo.default-release'
+        profile_path = r'C:\Users\Edmond\AppData\Roaming\Mozilla\Firefox\Profiles\a1oww1me.default-release'
 
     try:
         options = Options()
@@ -153,6 +154,107 @@ class YouTubeView(View):
                 return JsonResponse({'status': 402, 'message': repr(e)})
 
             return JsonResponse({'status': 200, 'u': user_id, 'a': account_id, 'v': video_id, 'e': extension, 's': file_size, 't': now.strftime('%Y-%m-%d %H:%M:%S')})
+
+        except Exception as e:
+            return JsonResponse({'status': 400, 'message': repr(e)})
+
+
+def get_download_url(id, video_url):
+    cookies = {
+        '_ga': 'GA1.2.214573273.1682039888',
+        '_gid': 'GA1.2.1056694047.1682039888',
+        '__gads': 'ID=6583bba55aa60e2d-226d98f4e9dc00e7:T=1682039892:RT=1682039892:S=ALNI_Ma5-APryWDWGu3PPqL2xhIMk5raRg',
+        '__cflb': '02DiuEcwseaiqqyPC5qqJA27ysjsZzMZ7tdPt6nNMjAKV',
+        '__gpi': 'UID=0000097d50921d86:T=1682039892:RT=1682062081:S=ALNI_MaAQ42D9mLmJih46WQOdv8zNVaRsg',
+        '_gat_UA-3524196-6': '1',
+    }
+
+    headers = {
+        'authority': 'ssstik.io',
+        'accept': '*/*',
+        'accept-language': 'en-US,en;q=0.9,ko;q=0.8,ru;q=0.7',
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'hx-current-url': 'https://ssstik.io/en',
+        'hx-request': 'true',
+        'hx-target': 'target',
+        'hx-trigger': '_gcaptcha_pt',
+        'origin': 'https://ssstik.io',
+        'referer': 'https://ssstik.io/en',
+        'sec-ch-ua': '"Chromium";v="112", "Google Chrome";v="112", "Not:A-Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
+    }
+
+    params = {
+        'url': 'dl',
+    }
+
+    data = {
+        'id': video_url,
+        'locale': 'en',
+        'tt': 'blVBNEYy',
+    }
+
+    response = requests.post('https://ssstik.io/abc', params=params, cookies=cookies, headers=headers, data=data)
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    video_title = soup.p.getText().strip()
+    download_url = soup.a['href']
+
+    return download_url
+
+
+class TikTokView(View):
+    def get(self, request, *args, **kwargs):
+        try:
+            environment = request.GET.get('e')
+            user_id = request.GET.get('u')
+            account_id = request.GET.get('a')
+            video_url = request.GET['v']
+
+            video_id = os.path.basename(video_url)
+            video_id = video_id[:video_id.find('?')]
+
+            file_name = f"{video_id}.mp4"
+            path = settings.BASE_DIR.joinpath('archive_data', file_name)
+
+            s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+            if account_id:
+                s3_path = f'{environment}/archive_data/{user_id}/TikTok/{account_id}/{file_name}'
+            else:
+                s3_path = f'TikTok/{file_name}'
+
+            try:
+                s3.head_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=s3_path)
+
+                return JsonResponse({'status': 200})
+            except:
+                pass
+
+            try:
+                download_url = get_download_url(video_id, video_url)
+
+                resp = urllib.request.urlopen(download_url)
+                content_type = resp.info()['Content-Type']
+                if content_type != 'application/octet-stream':
+                    return JsonResponse({'status': 401, 'message': content_type})
+
+                urllib.request.urlretrieve(download_url, path)
+
+                s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+                bucket = s3.Bucket(AWS_STORAGE_BUCKET_NAME)
+
+                bucket.upload_file(path, s3_path)
+
+                os.remove(path)
+            except Exception as e:
+                return JsonResponse({'status': 402, 'message': repr(e)})
+
+            return JsonResponse({'status': 200})
 
         except Exception as e:
             return JsonResponse({'status': 400, 'message': repr(e)})
