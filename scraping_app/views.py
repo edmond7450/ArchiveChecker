@@ -72,7 +72,7 @@ class InstagramView(View):
             try:
                 WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//header')))
                 profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
-                name = driver.find_element(By.XPATH, '//header/section/div[3]/span').text
+                name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
             except:
                 pass
             driver.close()
