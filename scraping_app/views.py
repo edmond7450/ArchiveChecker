@@ -159,7 +159,7 @@ class YouTubeView(View):
             return JsonResponse({'status': 400, 'message': repr(e)})
 
 
-def get_download_url(id, video_url):
+def get_tiktok_download_url(id, video_url):
     cookies = {
         '_ga': 'GA1.2.214573273.1682039888',
         '_gid': 'GA1.2.1056694047.1682039888',
@@ -237,7 +237,7 @@ class TikTokView(View):
                 pass
 
             try:
-                download_url = get_download_url(video_id, video_url)
+                download_url = get_tiktok_download_url(video_id, video_url)
 
                 resp = urllib.request.urlopen(download_url)
                 content_type = resp.info()['Content-Type']
