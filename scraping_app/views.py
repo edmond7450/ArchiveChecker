@@ -115,7 +115,7 @@ class YouTubeView(View):
 
                     now = datetime.utcnow()
 
-                    yt = YouTube(url)
+                    yt = YouTube(url, use_oauth=True, allow_oauth_cache=True)
                     yt_video = yt.streams.get_highest_resolution()
 
                     if file_size == yt_video.filesize:
