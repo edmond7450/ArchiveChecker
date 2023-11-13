@@ -16,6 +16,7 @@ from pytube.exceptions import VideoUnavailable
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -34,14 +35,11 @@ def setDriver():
 
     try:
         options = Options()
-        # options.set_preference('profile', profile_path)
+        options.profile = profile_path
         options.set_preference('devtools.jsonview.enabled', False)
 
-        # service = Service('geckodriver.exe')
-        # driver = webdriver.Firefox(service=service, options=options)
-
-        profile = webdriver.FirefoxProfile(profile_path)
-        driver = webdriver.Firefox(executable_path='geckodriver.exe', firefox_profile=profile, options=options)
+        service = Service('geckodriver.exe')
+        driver = webdriver.Firefox(service=service, options=options)
     except Exception as e:
         print(e)
 
@@ -116,7 +114,7 @@ class YouTubeView(View):
 
                     now = datetime.utcnow()
 
-                    yt = YouTube(url, use_oauth=True, allow_oauth_cache=True)
+                    yt = YouTube(url)
                     yt_video = yt.streams.get_highest_resolution()
 
                     if file_size == yt_video.filesize:
