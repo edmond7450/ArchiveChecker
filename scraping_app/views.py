@@ -1,4 +1,5 @@
 import boto3
+import magic
 import os
 import requests
 import ssl
@@ -239,12 +240,16 @@ class TikTokView(View):
             try:
                 download_url = get_tiktok_download_url(video_id, video_url)
 
-                resp = urllib.request.urlopen(download_url)
-                content_type = resp.info()['Content-Type']
-                if content_type != 'application/octet-stream':
-                    return JsonResponse({'status': 401, 'message': content_type})
+                # resp = urllib.request.urlopen(download_url)
+                # content_type = resp.info()['Content-Type']
+                # if content_type != 'application/octet-stream':
+                #     return JsonResponse({'status': 401, 'message': content_type})
 
                 urllib.request.urlretrieve(download_url, path)
+
+                mime_type = magic.from_file(path, mime=True)
+                if mime_type != 'video/mp4':
+                    return JsonResponse({'status': 401, 'message': mime_type})
 
                 s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
                 bucket = s3.Bucket(AWS_STORAGE_BUCKET_NAME)
