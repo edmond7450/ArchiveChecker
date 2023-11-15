@@ -245,8 +245,10 @@ class TikTokView(View):
 
                 urllib.request.urlretrieve(download_url, path)
 
-                mime_type = magic.from_file(path, mime=True)
+                mime_type = magic.from_file(str(path), mime=True)
                 if mime_type != 'video/mp4':
+                    if mime_type == 'text/html':
+                        os.remove(path)
                     return JsonResponse({'status': 401, 'message': mime_type})
 
                 s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
