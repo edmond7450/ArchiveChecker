@@ -11,6 +11,7 @@ from datetime import datetime
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.generic import View
+from pathlib import Path
 from pytube import YouTube
 from pytube.exceptions import VideoUnavailable
 from selenium import webdriver
@@ -31,7 +32,7 @@ def setDriver():
 
     profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\oex5aocl.default'
     if not os.path.exists(profile_path):
-        profile_path = r'C:\Users\Edmond\AppData\Roaming\Mozilla\Firefox\Profiles\a1oww1me.default-release'
+        profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\1pgwv6ld.default-release'
 
     try:
         options = Options()
@@ -210,7 +211,7 @@ def get_tiktok_download_url(id, video_url):
     return download_url
 
 
-class TikTokView(View):
+class TikTokView_(View):
     def get(self, request, *args, **kwargs):
         try:
             environment = request.GET.get('e')
@@ -264,3 +265,96 @@ class TikTokView(View):
 
         except Exception as e:
             return JsonResponse({'status': 400, 'message': repr(e)})
+
+
+class TikTokView(View):
+    def get(self, request, *args, **kwargs):
+        environment = request.GET.get('e')
+        user_id = request.GET.get('u')
+        account_id = request.GET.get('a')
+        video_id = request.GET['i']
+        video_url = request.GET['v']
+
+        file_name = f'{video_id}.mp4'
+        # path = settings.BASE_DIR.joinpath('archive_data', file_name)
+
+        s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+        if account_id:
+            s3_path = f'{environment}/archive_data/{user_id}/TikTok/{account_id}/{file_name}'
+        else:
+            s3_path = f'TikTok/{file_name}'
+
+        try:
+            s3.head_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=s3_path)
+
+            return JsonResponse({'status': 200})
+        except:
+            pass
+
+        sleeps = 0
+
+        global lock
+        while lock:
+            time.sleep(1)
+            sleeps += 1
+            if sleeps >= 5:
+                return JsonResponse({'status': 500})
+
+        lock = True
+        try:
+            driver.execute_script(f"window.open('https://ssstik.io/en', '_blank');")
+            time.sleep(0.5)
+            driver.switch_to.window(driver.window_handles[-1])
+            try:
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//input[@id="main_page_text"]')))
+                ele_input = driver.find_element(By.XPATH, '//input[@id="main_page_text"]')
+                ele_input.click()
+                time.sleep(0.5)
+                ele_input.send_keys(video_url)
+                time.sleep(0.5)
+
+                driver.find_element(By.XPATH, '//button[@id="submit"]').click()
+
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
+                if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
+                    driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
+                    time.sleep(0.5)
+                driver.find_element(By.XPATH, '//a[text()="Without watermark"]').click()
+                time.sleep(0.5)
+            except:
+                pass
+            driver.close()
+            driver.switch_to.window(driver.window_handles[0])
+        except Exception as e:
+            print(repr(e))
+        lock = False
+
+        path = ''
+        for f in sorted(Path('C:\\Users\\Administrator\\Downloads').iterdir(), key=os.path.getctime, reverse=True):
+            if f.name.endswith('.mp4.part'):
+                path = 'C:\\Users\\Administrator\\Downloads\\ssstik.io_' + f.name.split('_')[1][:-5]
+                break
+
+        if path:
+            for i in range(600):
+                if os.path.exists(path):
+                    break
+                time.sleep(1)
+
+            if not os.path.exists(path):
+                return JsonResponse({'status': 401, 'message': 'Download Timeout'})
+
+            mime_type = magic.from_file(path, mime=True)
+            if mime_type != 'video/mp4':
+                return JsonResponse({'status': 402, 'message': mime_type})
+
+            s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+            bucket = s3.Bucket(AWS_STORAGE_BUCKET_NAME)
+
+            bucket.upload_file(path, s3_path)
+
+            os.remove(path)
+        else:
+            return JsonResponse({'status': 401, 'message': 'Download failed'})
+
+        return JsonResponse({'status': 200})
