@@ -276,7 +276,7 @@ class TikTokView(View):
         video_url = request.GET['v']
 
         file_name = f'{video_id}.mp4'
-        # path = settings.BASE_DIR.joinpath('archive_data', file_name)
+        path = ''  # settings.BASE_DIR.joinpath('archive_data', file_name)
 
         s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
         if account_id:
@@ -292,6 +292,16 @@ class TikTokView(View):
             pass
 
         sleeps = 0
+        while True:
+            if any((f.endswith('.mp4') or f.endswith('.mp4.part')) for f in os.listdir('C:\\Users\\Administrator\\Downloads')):
+                time.sleep(1)
+                sleeps += 1
+                if sleeps >= 10:
+                    return JsonResponse({'status': 501, 'message': 'MP4 file exists'})
+            else:
+                break
+
+        sleeps = 0
 
         global lock
         while lock:
@@ -301,46 +311,67 @@ class TikTokView(View):
                 return JsonResponse({'status': 500})
 
         lock = True
+        if any((f.endswith('.mp4') or f.endswith('.mp4.part')) for f in os.listdir('C:\\Users\\Administrator\\Downloads')):
+            return JsonResponse({'status': 502, 'message': 'MP4 file exists'})
+
         try:
-            driver.execute_script(f"window.open('https://ssstik.io/en', '_blank');")
+            driver.execute_script("window.open('https://ssstik.io/en', '_blank');")
             time.sleep(0.5)
             driver.switch_to.window(driver.window_handles[-1])
             try:
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//input[@id="main_page_text"]')))
                 ele_input = driver.find_element(By.XPATH, '//input[@id="main_page_text"]')
                 ele_input.click()
-                time.sleep(0.5)
                 ele_input.send_keys(video_url)
-                time.sleep(0.5)
+                time.sleep(0.1)
 
                 driver.find_element(By.XPATH, '//button[@id="submit"]').click()
 
                 WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
                 if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
                     driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
-                    time.sleep(0.5)
+                    time.sleep(0.1)
+                if len(driver.find_elements(By.XPATH, '//button[@data-micromodal-close=""]')) > 0 and driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').is_displayed():
+                    driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').click()
+                    time.sleep(0.1)
                 driver.find_element(By.XPATH, '//a[text()="Without watermark"]').click()
-                time.sleep(0.5)
+                time.sleep(0.1)
+                if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
+                    driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
+                    time.sleep(0.1)
+                if len(driver.find_elements(By.XPATH, '//button[@data-micromodal-close=""]')) > 0 and driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').is_displayed():
+                    driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').click()
+                    time.sleep(0.1)
             except:
                 pass
+
+            for i in range(5):
+                for f in sorted(Path('C:\\Users\\Administrator\\Downloads').iterdir(), key=os.path.getctime, reverse=True):
+                    if f.name.endswith('.mp4.part'):
+                        path = 'C:\\Users\\Administrator\\Downloads\\ssstik.io_' + f.name.split('_')[1][:-5]
+                        break
+                if path:
+                    break
+                time.sleep(0.5)
+
+            if path:
+                for i in range(600):
+                    if os.path.exists(path):
+                        break
+                    time.sleep(1)
+            else:
+                for f in sorted(Path('C:\\Users\\Administrator\\Downloads').iterdir(), key=os.path.getctime, reverse=True):
+                    if f.name.endswith('.mp4'):
+                        path = 'C:\\Users\\Administrator\\Downloads\\' + f.name
+                        break
+
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
         except Exception as e:
             print(repr(e))
         lock = False
 
-        path = ''
-        for f in sorted(Path('C:\\Users\\Administrator\\Downloads').iterdir(), key=os.path.getctime, reverse=True):
-            if f.name.endswith('.mp4.part'):
-                path = 'C:\\Users\\Administrator\\Downloads\\ssstik.io_' + f.name.split('_')[1][:-5]
-                break
-
         if path:
-            for i in range(600):
-                if os.path.exists(path):
-                    break
-                time.sleep(1)
-
             if not os.path.exists(path):
                 return JsonResponse({'status': 401, 'message': 'Download Timeout'})
 
