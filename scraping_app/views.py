@@ -354,16 +354,19 @@ class TikTokView(View):
                     break
                 time.sleep(0.5)
 
-            if path:
-                for i in range(600):
-                    if os.path.exists(path):
-                        break
-                    time.sleep(1)
-            else:
+            if not path:
                 for f in sorted(Path('C:\\Users\\Administrator\\Downloads').iterdir(), key=os.path.getctime, reverse=True):
                     if f.name.endswith('.mp4'):
                         path = 'C:\\Users\\Administrator\\Downloads\\' + f.name
                         break
+
+            if path:
+                for i in range(600):
+                    if os.path.exists(path):
+                        mime_type = magic.from_file(path, mime=True)
+                        if mime_type != 'inode/x-empty':
+                            break
+                    time.sleep(1)
 
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
