@@ -211,62 +211,6 @@ def get_tiktok_download_url(id, video_url):
     return download_url
 
 
-class TikTokView_(View):
-    def get(self, request, *args, **kwargs):
-        try:
-            environment = request.GET.get('e')
-            user_id = request.GET.get('u')
-            account_id = request.GET.get('a')
-            video_id = request.GET['i']
-            video_url = request.GET['v']
-
-            file_name = f'{video_id}.mp4'
-            path = settings.BASE_DIR.joinpath('archive_data', file_name)
-
-            s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-            if account_id:
-                s3_path = f'{environment}/archive_data/{user_id}/TikTok/{account_id}/{file_name}'
-            else:
-                s3_path = f'TikTok/{file_name}'
-
-            try:
-                s3.head_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=s3_path)
-
-                return JsonResponse({'status': 200})
-            except:
-                pass
-
-            try:
-                download_url = get_tiktok_download_url(video_id, video_url)
-
-                # resp = urllib.request.urlopen(download_url)
-                # content_type = resp.info()['Content-Type']
-                # if content_type != 'application/octet-stream':
-                #     return JsonResponse({'status': 401, 'message': content_type})
-
-                urllib.request.urlretrieve(download_url, path)
-
-                mime_type = magic.from_file(str(path), mime=True)
-                if mime_type != 'video/mp4':
-                    if mime_type == 'text/html':
-                        os.remove(path)
-                    return JsonResponse({'status': 401, 'message': mime_type})
-
-                s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-                bucket = s3.Bucket(AWS_STORAGE_BUCKET_NAME)
-
-                bucket.upload_file(path, s3_path)
-
-                os.remove(path)
-            except Exception as e:
-                return JsonResponse({'status': 402, 'message': repr(e)})
-
-            return JsonResponse({'status': 200})
-
-        except Exception as e:
-            return JsonResponse({'status': 400, 'message': repr(e)})
-
-
 class TikTokView(View):
     def get(self, request, *args, **kwargs):
         environment = request.GET.get('e')
@@ -343,7 +287,31 @@ class TikTokView(View):
                     driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').click()
                     time.sleep(0.1)
             except:
-                pass
+                driver.get('https://ssstik.io/en')
+
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//input[@id="main_page_text"]')))
+                ele_input = driver.find_element(By.XPATH, '//input[@id="main_page_text"]')
+                ele_input.click()
+                ele_input.send_keys(video_url)
+                time.sleep(0.1)
+
+                driver.find_element(By.XPATH, '//button[@id="submit"]').click()
+
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
+                if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
+                    driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
+                    time.sleep(0.1)
+                if len(driver.find_elements(By.XPATH, '//button[@data-micromodal-close=""]')) > 0 and driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').is_displayed():
+                    driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').click()
+                    time.sleep(0.1)
+                driver.find_element(By.XPATH, '//a[text()="Without watermark"]').click()
+                time.sleep(0.1)
+                if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
+                    driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
+                    time.sleep(0.1)
+                if len(driver.find_elements(By.XPATH, '//button[@data-micromodal-close=""]')) > 0 and driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').is_displayed():
+                    driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').click()
+                    time.sleep(0.1)
 
             for i in range(5):
                 for f in sorted(Path('C:\\Users\\Administrator\\Downloads').iterdir(), key=os.path.getctime, reverse=True):
