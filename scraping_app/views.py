@@ -159,58 +159,6 @@ class YouTubeView(View):
             return JsonResponse({'status': 400, 'message': repr(e)})
 
 
-def get_tiktok_download_url(id, video_url):
-    cookies = {
-        '_ga': 'GA1.2.214573273.1682039888',
-        '_gid': 'GA1.2.1056694047.1682039888',
-        '__gads': 'ID=6583bba55aa60e2d-226d98f4e9dc00e7:T=1682039892:RT=1682039892:S=ALNI_Ma5-APryWDWGu3PPqL2xhIMk5raRg',
-        '__cflb': '02DiuEcwseaiqqyPC5qqJA27ysjsZzMZ7tdPt6nNMjAKV',
-        '__gpi': 'UID=0000097d50921d86:T=1682039892:RT=1682062081:S=ALNI_MaAQ42D9mLmJih46WQOdv8zNVaRsg',
-        '_gat_UA-3524196-6': '1',
-    }
-
-    headers = {
-        'authority': 'ssstik.io',
-        'accept': '*/*',
-        'accept-language': 'en-US,en;q=0.9,ko;q=0.8,ru;q=0.7',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'hx-current-url': 'https://ssstik.io/en',
-        'hx-request': 'true',
-        'hx-target': 'target',
-        'hx-trigger': '_gcaptcha_pt',
-        'origin': 'https://ssstik.io',
-        'referer': 'https://ssstik.io/en',
-        'sec-ch-ua': '"Chromium";v="112", "Google Chrome";v="112", "Not:A-Brand";v="99"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
-    }
-
-    params = {
-        'url': 'dl',
-    }
-
-    data = {
-        'id': video_url,
-        'locale': 'en',
-        'tt': 'blVBNEYy',
-    }
-
-    response = requests.post('https://ssstik.io/abc', params=params, cookies=cookies, headers=headers, data=data)
-    if response.text == '':
-        time.sleep(5)
-        response = requests.post('https://ssstik.io/abc', params=params, cookies=cookies, headers=headers, data=data)
-
-    soup = BeautifulSoup(response.text, 'html.parser')
-    video_title = soup.p.getText().strip()
-    download_url = soup.a['href']
-
-    return download_url
-
-
 class TikTokView(View):
     def get(self, request, *args, **kwargs):
         environment = request.GET.get('e')
@@ -266,8 +214,9 @@ class TikTokView(View):
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//input[@id="main_page_text"]')))
                 ele_input = driver.find_element(By.XPATH, '//input[@id="main_page_text"]')
                 ele_input.click()
-                ele_input.send_keys(video_url)
                 time.sleep(0.1)
+                ele_input.send_keys(video_url)
+                time.sleep(1)
 
                 driver.find_element(By.XPATH, '//button[@id="submit"]').click()
 
