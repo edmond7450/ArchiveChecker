@@ -1,12 +1,9 @@
 import boto3
 import magic
 import os
-import requests
 import ssl
 import time
-import urllib.request
 
-from bs4 import BeautifulSoup
 from datetime import datetime
 from django.conf import settings
 from django.http import JsonResponse
@@ -15,6 +12,7 @@ from pathlib import Path
 from pytube import YouTube
 from pytube.exceptions import VideoUnavailable
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
@@ -219,8 +217,13 @@ class TikTokView(View):
                 time.sleep(1)
 
                 driver.find_element(By.XPATH, '//button[@id="submit"]').click()
+                try:
+                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
+                except TimeoutException:
+                    time.sleep(10)
+                    driver.find_element(By.XPATH, '//button[@id="submit"]').click()
+                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
 
-                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
                 if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
                     driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
                     time.sleep(0.1)
@@ -245,8 +248,13 @@ class TikTokView(View):
                 time.sleep(0.1)
 
                 driver.find_element(By.XPATH, '//button[@id="submit"]').click()
+                try:
+                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
+                except TimeoutException:
+                    time.sleep(10)
+                    driver.find_element(By.XPATH, '//button[@id="submit"]').click()
+                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
 
-                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
                 if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
                     driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
                     time.sleep(0.1)
