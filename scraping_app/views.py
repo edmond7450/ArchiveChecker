@@ -28,7 +28,7 @@ lock = False
 def setDriver():
     global driver
 
-    profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\oex5aocl.default'
+    profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\455dzlxw.default-release-1707249233643'
     if not os.path.exists(profile_path):
         profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\1pgwv6ld.default-release'
 
@@ -63,16 +63,23 @@ class InstagramView(View):
                 return JsonResponse({'status': 500})
 
         lock = True
+        while len(driver.window_handles) > 1:
+            try:
+                driver.switch_to.window(driver.window_handles[-1])
+                time.sleep(1)
+                driver.close()
+            except:
+                pass
         try:
             driver.execute_script(f"window.open('{url}', '_blank');")
-            time.sleep(0.5)
+            time.sleep(1)
             driver.switch_to.window(driver.window_handles[-1])
             try:
                 WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//header')))
                 profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
                 name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
             except:
-                pass
+                time.sleep(1)
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
         except Exception as e:
@@ -200,10 +207,10 @@ class TikTokView(View):
             if sleeps >= 5:
                 return JsonResponse({'status': 500})
 
-        lock = True
         if any((f.endswith('.mp4') or f.endswith('.mp4.part')) for f in os.listdir('C:\\Users\\Administrator\\Downloads')):
             return JsonResponse({'status': 502, 'message': 'MP4 file exists'})
 
+        lock = True
         try:
             driver.execute_script("window.open('https://ssstik.io/en', '_blank');")
             time.sleep(0.5)
