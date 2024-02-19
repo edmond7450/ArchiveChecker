@@ -22,19 +22,27 @@ from selenium.webdriver.support.ui import WebDriverWait
 from my_settings import *
 
 driver = None
+profile_index = 0
 lock = False
 
 
-def setDriver():
+def open_driver():
     global driver
+    global profile_index
 
-    profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\455dzlxw.default-release-1707249233643'
-    if not os.path.exists(profile_path):
-        profile_path = r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\1pgwv6ld.default-release'
+    profiles = [
+        r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\455dzlxw.default-release-1707249233643',
+        r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\lybi8xkf.User 1'
+    ]
+    # profiles = [
+    #     r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\1pgwv6ld.default-release'
+    # ]
 
     try:
+        if profile_index >= len(profiles):
+            profile_index = 0
         options = Options()
-        options.profile = profile_path
+        options.profile = profiles[profile_index]
         options.set_preference('devtools.jsonview.enabled', False)
 
         service = Service('geckodriver.exe')
@@ -43,7 +51,7 @@ def setDriver():
         print(e)
 
 
-setDriver()
+open_driver()
 
 
 class InstagramView(View):
@@ -55,6 +63,7 @@ class InstagramView(View):
         profile_image_url = ''
         sleeps = 0
 
+        global profile_index
         global lock
         while lock:
             time.sleep(1)
@@ -78,10 +87,38 @@ class InstagramView(View):
                 WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//header')))
                 profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
                 name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
+                driver.close()
+                driver.switch_to.window(driver.window_handles[0])
             except:
-                time.sleep(1)
-            driver.close()
-            driver.switch_to.window(driver.window_handles[0])
+                try:
+                    driver.close()
+                    driver.quit()
+                except:
+                    pass
+                profile_index += 1
+                open_driver()
+
+                try:
+                    driver.execute_script(f"window.open('{url}', '_blank');")
+                    time.sleep(1)
+                    driver.switch_to.window(driver.window_handles[-1])
+                    try:
+                        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//header')))
+                        profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
+                        name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
+                        driver.close()
+                        driver.switch_to.window(driver.window_handles[0])
+                    except:
+                        try:
+                            driver.close()
+                            driver.quit()
+                        except:
+                            pass
+                        profile_index += 1
+                        open_driver()
+                except Exception as e:
+                    print(repr(e))
+
         except Exception as e:
             print(repr(e))
         lock = False
@@ -189,26 +226,19 @@ class TikTokView(View):
             pass
 
         sleeps = 0
-        while True:
-            if any((f.endswith('.mp4') or f.endswith('.mp4.part')) for f in os.listdir('C:\\Users\\Administrator\\Downloads')):
-                time.sleep(1)
-                sleeps += 1
-                if sleeps >= 10:
-                    return JsonResponse({'status': 501, 'message': 'MP4 file exists'})
-            else:
-                break
-
-        sleeps = 0
-
         global lock
         while lock:
             time.sleep(1)
             sleeps += 1
-            if sleeps >= 5:
+            if sleeps >= 10:
                 return JsonResponse({'status': 500})
 
+        for f in os.listdir('C:\\Users\\Administrator\\Downloads'):
+            if f.endswith('.mp4') or f.endswith('.mp4.part'):
+                os.remove(os.path.join('C:\\Users\\Administrator\\Downloads', f))
+
         if any((f.endswith('.mp4') or f.endswith('.mp4.part')) for f in os.listdir('C:\\Users\\Administrator\\Downloads')):
-            return JsonResponse({'status': 502, 'message': 'MP4 file exists'})
+            return JsonResponse({'status': 501, 'message': 'MP4 file exists'})
 
         lock = True
         try:
@@ -310,16 +340,19 @@ class TikTokView(View):
             if not os.path.exists(path):
                 return JsonResponse({'status': 401, 'message': 'Download Timeout'})
 
-            mime_type = magic.from_file(path, mime=True)
-            if mime_type != 'video/mp4':
-                return JsonResponse({'status': 402, 'message': mime_type})
+            try:
+                mime_type = magic.from_file(path, mime=True)
+                if mime_type != 'video/mp4':
+                    return JsonResponse({'status': 402, 'message': mime_type})
 
-            s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
-            bucket = s3.Bucket(AWS_STORAGE_BUCKET_NAME)
+                s3 = boto3.resource('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+                bucket = s3.Bucket(AWS_STORAGE_BUCKET_NAME)
 
-            bucket.upload_file(path, s3_path)
+                bucket.upload_file(path, s3_path)
 
-            os.remove(path)
+                os.remove(path)
+            except:
+                return JsonResponse({'status': 502, 'message': 'Upload Failed'})
         else:
             return JsonResponse({'status': 401, 'message': 'Download failed'})
 
