@@ -2,6 +2,7 @@ import boto3
 import magic
 import os
 import ssl
+import shutil
 import time
 
 from datetime import datetime
@@ -32,11 +33,27 @@ def open_driver():
 
     profiles = [
         r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\455dzlxw.default-release-1707249233643',
-        r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\lybi8xkf.User 1'
+        r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\lybi8xkf.User 1',
+        r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\kfpn79je.User 2',
+        r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\edfdede0.User 3'
     ]
     # profiles = [
     #     r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\1pgwv6ld.default-release'
     # ]
+
+    temp_dir = r'C:\Users\Administrator\AppData\Local\Temp\2'
+
+    try:
+        driver.close()
+        driver.quit()
+    except:
+        pass
+
+    try:
+        shutil.rmtree(temp_dir)
+        os.mkdir(temp_dir)
+    except:
+        pass
 
     try:
         if profile_index >= len(profiles):
@@ -90,11 +107,6 @@ class InstagramView(View):
                 driver.close()
                 driver.switch_to.window(driver.window_handles[0])
             except:
-                try:
-                    driver.close()
-                    driver.quit()
-                except:
-                    pass
                 profile_index += 1
                 open_driver()
 
@@ -109,15 +121,10 @@ class InstagramView(View):
                         driver.close()
                         driver.switch_to.window(driver.window_handles[0])
                     except:
-                        try:
-                            driver.close()
-                            driver.quit()
-                        except:
-                            pass
                         profile_index += 1
                         open_driver()
                 except Exception as e:
-                    print(repr(e))
+                    print('----------', repr(e))
 
         except Exception as e:
             print(repr(e))
