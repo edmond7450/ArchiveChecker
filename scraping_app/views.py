@@ -78,6 +78,7 @@ class InstagramView(View):
 
         name = ''
         profile_image_url = ''
+        status = 400
         sleeps = 0
 
         global profile_index
@@ -101,9 +102,15 @@ class InstagramView(View):
             time.sleep(1)
             driver.switch_to.window(driver.window_handles[-1])
             try:
-                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//header')))
-                profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
-                name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
+                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//main')))
+                if len(driver.find_elements(By.XPATH, '//header')) > 0:
+                    profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
+                    name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
+                    status = 200
+                elif len(driver.find_elements(By.XPATH, '//*[text()="Sorry, this page isn\'t available."]')) > 0:
+                    status = 401
+                elif len(driver.find_elements(By.XPATH, '//*[text()="There\'s an issue and the page could not be loaded."]')) > 0:
+                    raise Exception
                 driver.close()
                 driver.switch_to.window(driver.window_handles[0])
             except:
@@ -115,9 +122,15 @@ class InstagramView(View):
                     time.sleep(1)
                     driver.switch_to.window(driver.window_handles[-1])
                     try:
-                        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//header')))
-                        profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
-                        name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
+                        WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//main')))
+                        if len(driver.find_elements(By.XPATH, '//header')) > 0:
+                            profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
+                            name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
+                            status = 200
+                        elif len(driver.find_elements(By.XPATH, '//*[text()="Sorry, this page isn\'t available."]')) > 0:
+                            status = 401
+                        elif len(driver.find_elements(By.XPATH, '//*[text()="There\'s an issue and the page could not be loaded."]')) > 0:
+                            status = 402
                         driver.close()
                         driver.switch_to.window(driver.window_handles[0])
                     except:
@@ -130,7 +143,7 @@ class InstagramView(View):
             print(repr(e))
         lock = False
 
-        return JsonResponse({'status': 200, 'name': name, 'profile_image_url': profile_image_url})
+        return JsonResponse({'status': status, 'name': name, 'profile_image_url': profile_image_url})
 
 
 class YouTubeView(View):
