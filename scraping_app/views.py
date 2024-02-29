@@ -86,7 +86,11 @@ class InstagramView(View):
         while lock:
             time.sleep(1)
             sleeps += 1
-            if sleeps >= 5:
+            if sleeps >= 10:
+                if len(driver.window_handles) == 1:
+                    time.sleep(5)
+                    if lock and len(driver.window_handles) == 1:
+                        break
                 return JsonResponse({'status': 500})
 
         lock = True
@@ -105,11 +109,12 @@ class InstagramView(View):
                 WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//main')))
                 if len(driver.find_elements(By.XPATH, '//header')) > 0:
                     profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
-                    name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
+                    if len(driver.find_elements(By.XPATH, '//header/section/div[3]//span')) > 0:
+                        name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
                     status = 200
                 elif len(driver.find_elements(By.XPATH, '//*[text()="Sorry, this page isn\'t available."]')) > 0:
                     status = 401
-                elif len(driver.find_elements(By.XPATH, '//*[text()="There\'s an issue and the page could not be loaded."]')) > 0:
+                else:
                     raise Exception
                 driver.close()
                 driver.switch_to.window(driver.window_handles[0])
@@ -125,12 +130,14 @@ class InstagramView(View):
                         WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//main')))
                         if len(driver.find_elements(By.XPATH, '//header')) > 0:
                             profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
-                            name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
+                            if len(driver.find_elements(By.XPATH, '//header/section/div[3]//span')) > 0:
+                                name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
                             status = 200
                         elif len(driver.find_elements(By.XPATH, '//*[text()="Sorry, this page isn\'t available."]')) > 0:
                             status = 401
-                        elif len(driver.find_elements(By.XPATH, '//*[text()="There\'s an issue and the page could not be loaded."]')) > 0:
-                            status = 402
+                        else:
+                            driver.save_screenshot(f'{username}.png')
+                            raise Exception
                         driver.close()
                         driver.switch_to.window(driver.window_handles[0])
                     except:
@@ -251,6 +258,10 @@ class TikTokView(View):
             time.sleep(1)
             sleeps += 1
             if sleeps >= 10:
+                if len(driver.window_handles) == 1:
+                    time.sleep(5)
+                    if lock and len(driver.window_handles) == 1:
+                        break
                 return JsonResponse({'status': 500})
 
         for f in os.listdir('C:\\Users\\Administrator\\Downloads'):
@@ -275,11 +286,11 @@ class TikTokView(View):
 
                 driver.find_element(By.XPATH, '//button[@id="submit"]').click()
                 try:
-                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
+                    WebDriverWait(driver, 10).until(lambda driver: driver.find_elements(By.XPATH, '//a[text()="Without watermark"]') or driver.find_elements(By.XPATH, '//a[@id="slides_generate"]'))
                 except TimeoutException:
                     time.sleep(10)
                     driver.find_element(By.XPATH, '//button[@id="submit"]').click()
-                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
+                    WebDriverWait(driver, 10).until(lambda driver: driver.find_elements(By.XPATH, '//a[text()="Without watermark"]') or driver.find_elements(By.XPATH, '//a[@id="slides_generate"]'))
 
                 if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
                     driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
@@ -287,8 +298,12 @@ class TikTokView(View):
                 if len(driver.find_elements(By.XPATH, '//button[@data-micromodal-close=""]')) > 0 and driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').is_displayed():
                     driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').click()
                     time.sleep(0.1)
-                driver.find_element(By.XPATH, '//a[text()="Without watermark"]').click()
-                time.sleep(0.1)
+                if len(driver.find_elements(By.XPATH, '//a[text()="Without watermark"]')) > 0:
+                    driver.find_element(By.XPATH, '//a[text()="Without watermark"]').click()
+                    time.sleep(0.1)
+                if len(driver.find_elements(By.XPATH, '//a[@id="slides_generate"]')) > 0:
+                    driver.find_element(By.XPATH, '//a[@id="slides_generate"]').click()
+                    time.sleep(0.1)
                 if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
                     driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
                     time.sleep(0.1)
@@ -306,11 +321,11 @@ class TikTokView(View):
 
                 driver.find_element(By.XPATH, '//button[@id="submit"]').click()
                 try:
-                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
+                    WebDriverWait(driver, 10).until(lambda driver: driver.find_elements(By.XPATH, '//a[text()="Without watermark"]') or driver.find_elements(By.XPATH, '//a[@id="slides_generate"]'))
                 except TimeoutException:
                     time.sleep(10)
                     driver.find_element(By.XPATH, '//button[@id="submit"]').click()
-                    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//a[text()="Without watermark"]')))
+                    WebDriverWait(driver, 10).until(lambda driver: driver.find_elements(By.XPATH, '//a[text()="Without watermark"]') or driver.find_elements(By.XPATH, '//a[@id="slides_generate"]'))
 
                 if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
                     driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
@@ -318,8 +333,12 @@ class TikTokView(View):
                 if len(driver.find_elements(By.XPATH, '//button[@data-micromodal-close=""]')) > 0 and driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').is_displayed():
                     driver.find_element(By.XPATH, '//button[@data-micromodal-close=""]').click()
                     time.sleep(0.1)
-                driver.find_element(By.XPATH, '//a[text()="Without watermark"]').click()
-                time.sleep(0.1)
+                if len(driver.find_elements(By.XPATH, '//a[text()="Without watermark"]')) > 0:
+                    driver.find_element(By.XPATH, '//a[text()="Without watermark"]').click()
+                    time.sleep(0.1)
+                if len(driver.find_elements(By.XPATH, '//a[@id="slides_generate"]')) > 0:
+                    driver.find_element(By.XPATH, '//a[@id="slides_generate"]').click()
+                    time.sleep(0.1)
                 if len(driver.find_elements(By.XPATH, '//*[@id="dismiss-button"]')) > 0 and driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').is_displayed():
                     driver.find_element(By.XPATH, '//*[@id="dismiss-button"]').click()
                     time.sleep(0.1)
