@@ -108,10 +108,12 @@ class InstagramView(View):
             try:
                 WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//main')))
                 if len(driver.find_elements(By.XPATH, '//header')) > 0:
-                    profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
+                    if len(driver.find_elements(By.XPATH, '//header//img')) > 0:
+                        profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
                     if len(driver.find_elements(By.XPATH, '//header/section/div[3]//span')) > 0:
                         name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
-                    status = 200
+                    if profile_image_url or name:
+                        status = 200
                 elif len(driver.find_elements(By.XPATH, '//*[text()="Sorry, this page isn\'t available."]')) > 0:
                     status = 401
                 else:
@@ -129,10 +131,12 @@ class InstagramView(View):
                     try:
                         WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//main')))
                         if len(driver.find_elements(By.XPATH, '//header')) > 0:
-                            profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
+                            if len(driver.find_elements(By.XPATH, '//header//img')) > 0:
+                                profile_image_url = driver.find_element(By.XPATH, '//header//img').get_attribute('src')
                             if len(driver.find_elements(By.XPATH, '//header/section/div[3]//span')) > 0:
                                 name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
-                            status = 200
+                            if profile_image_url or name:
+                                status = 200
                         elif len(driver.find_elements(By.XPATH, '//*[text()="Sorry, this page isn\'t available."]')) > 0:
                             status = 401
                         else:
