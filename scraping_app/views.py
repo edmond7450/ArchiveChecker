@@ -189,7 +189,14 @@ class YouTubeView(View):
                     now = datetime.utcnow()
 
                     yt = YouTube(url, use_oauth=True, allow_oauth_cache=True)
-                    yt_video = yt.streams.get_highest_resolution()
+                    try:
+                        yt_video = yt.streams.get_highest_resolution()
+                    except:
+                        try:
+                            if yt.watch_html.find("This video has been removed for violating YouTube's Community Guidelines") > 0:
+                                return JsonResponse({'status': 404, 'message': "This video has been removed for violating YouTube's Community Guidelines"})
+                        except:
+                            raise Exception
 
                     if file_size == yt_video.filesize:
                         return JsonResponse({'status': 200})
