@@ -11,7 +11,7 @@ from django.http import JsonResponse
 from django.views.generic import View
 from pathlib import Path
 from pytube import YouTube
-from pytube.exceptions import VideoUnavailable
+from pytube.exceptions import VideoPrivate, VideoRegionBlocked, VideoUnavailable
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -191,12 +191,26 @@ class YouTubeView(View):
                     yt = YouTube(url, use_oauth=True, allow_oauth_cache=True)
                     try:
                         yt_video = yt.streams.get_highest_resolution()
-                    except:
+                    except (VideoPrivate, VideoRegionBlocked, VideoUnavailable) as e:
+                        return JsonResponse({'status': 404, 'message': str(e)})
+                    except Exception as e:
                         try:
-                            if yt.watch_html.find("This video has been removed for violating YouTube's Community Guidelines") > 0:
+                            if yt.watch_html.find("This video isn't available anymore") > 0:
+                                return JsonResponse({'status': 404, 'message': "This video isn't available anymore"})
+
+                            elif yt.watch_html.find("This is a private video.") > 0:
+                                return JsonResponse({'status': 404, 'message': "This is a private video."})
+
+                            elif yt.watch_html.find("This video is no longer available because the YouTube account associated with this video has been terminated.") > 0:
+                                return JsonResponse({'status': 404, 'message': "This video is no longer available because the YouTube account associated with this video has been terminated."})
+
+                            elif yt.watch_html.find("This video has been removed for violating YouTube's Terms of Service") > 0:
+                                return JsonResponse({'status': 404, 'message': "This video has been removed for violating YouTube's Terms of Service"})
+
+                            elif yt.watch_html.find("This video has been removed for violating YouTube's Community Guidelines") > 0:
                                 return JsonResponse({'status': 404, 'message': "This video has been removed for violating YouTube's Community Guidelines"})
                         except:
-                            raise Exception
+                            raise Exception(e)
 
                     if file_size == yt_video.filesize:
                         return JsonResponse({'status': 200})
@@ -211,8 +225,6 @@ class YouTubeView(View):
                     file_size = os.path.getsize(path)
                     break
 
-                except VideoUnavailable as e:
-                    return JsonResponse({'status': 404, 'message': str(e)})
                 except Exception as e:
                     if i == 3:
                         return JsonResponse({'status': 401, 'message': repr(e)})
