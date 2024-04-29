@@ -137,6 +137,8 @@ class InstagramView(View):
                                 name = driver.find_element(By.XPATH, '//header/section/div[3]//span').text
                             if profile_image_url or name:
                                 status = 200
+                            elif len(driver.find_elements(By.XPATH, '//header/section/div//a/h2')) > 0:
+                                status = 401
                         elif len(driver.find_elements(By.XPATH, '//*[text()="Sorry, this page isn\'t available."]')) > 0:
                             status = 401
                         else:
