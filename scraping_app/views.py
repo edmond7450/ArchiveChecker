@@ -31,15 +31,17 @@ def open_driver():
     global driver
     global profile_index
 
-    profiles = [
-        r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\455dzlxw.default-release-1707249233643',
-        r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\lybi8xkf.User 1',
-        r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\kfpn79je.User 2',
-        r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\edfdede0.User 3'
-    ]
-    # profiles = [
-    #     r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\1pgwv6ld.default-release'
-    # ]
+    if os.path.exists(r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\1pgwv6ld.default-release'):
+        profiles = [
+            r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\1pgwv6ld.default-release'
+        ]
+    else:
+        profiles = [
+            r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\455dzlxw.default-release-1707249233643',
+            r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\lybi8xkf.User 1',
+            r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\kfpn79je.User 2',
+            r'C:\Users\Administrator\AppData\Roaming\Mozilla\Firefox\Profiles\edfdede0.User 3'
+        ]
 
     temp_dir = r'C:\Users\Administrator\AppData\Local\Temp\2'
 
