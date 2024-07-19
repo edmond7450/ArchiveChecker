@@ -1,8 +1,8 @@
 boto3
 bs4
 Django
-pytube
 python-magic
 python-magic-bin
 requests
 selenium
+yt-dlp

@@ -1,17 +1,15 @@
 import boto3
 import magic
 import os
-import ssl
 import shutil
 import time
+import yt_dlp
 
 from datetime import datetime
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.generic import View
 from pathlib import Path
-from pytube import YouTube
-from pytube.exceptions import VideoPrivate, VideoRegionBlocked, VideoUnavailable
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -188,47 +186,25 @@ class YouTubeView(View):
 
             for i in range(4):
                 try:
-                    ssl._create_default_https_context = ssl._create_unverified_context
-
                     now = datetime.utcnow()
 
-                    yt = YouTube(url, use_oauth=True, allow_oauth_cache=True)
-                    try:
-                        yt_video = yt.streams.get_highest_resolution()
-                    except (VideoPrivate, VideoRegionBlocked, VideoUnavailable) as e:
-                        return JsonResponse({'status': 404, 'message': str(e)})
-                    except Exception as e:
-                        try:
-                            if yt.watch_html.find("This video isn't available anymore") > 0:
-                                return JsonResponse({'status': 404, 'message': "This video isn't available anymore"})
+                    ydl_opts = {
+                        'merge_output_format': 'mp4',
+                        'outtmpl': '%(id)s.%(ext)s'
+                    }
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        if file_size:
+                            info = ydl.extract_info(url, download=False)
+                            if file_size == info['filesize']:
+                                return JsonResponse({'status': 200})
 
-                            elif yt.watch_html.find("This is a private video.") > 0:
-                                return JsonResponse({'status': 404, 'message': "This is a private video."})
+                        ydl.download([url])
 
-                            elif yt.watch_html.find("This video is no longer available because the YouTube account associated with this video has been terminated.") > 0:
-                                return JsonResponse({'status': 404, 'message': "This video is no longer available because the YouTube account associated with this video has been terminated."})
-
-                            elif yt.watch_html.find("This video has been removed for violating YouTube's Terms of Service") > 0:
-                                return JsonResponse({'status': 404, 'message': "This video has been removed for violating YouTube's Terms of Service"})
-
-                            elif yt.watch_html.find("This video has been removed for violating YouTube's Community Guidelines") > 0:
-                                return JsonResponse({'status': 404, 'message': "This video has been removed for violating YouTube's Community Guidelines"})
-                        except:
-                            raise Exception(e)
-
-                    if file_size == yt_video.filesize:
-                        return JsonResponse({'status': 200})
-
-                    extension = os.path.splitext(yt_video.default_filename)[1]
-                    if account_id:
-                        file_name = f"{video_id}--{now.strftime('%Y-%m-%d--%H-%M-%S')}{extension}"
-                    else:
-                        file_name = f"{video_id}{extension}"
-
-                    path = yt_video.download(output_path=output_path, filename=file_name)
+                    file_name = f'{video_id}.mp4'
+                    path = output_path.joinpath(file_name)
                     file_size = os.path.getsize(path)
-                    break
 
+                    break
                 except Exception as e:
                     if i == 3:
                         return JsonResponse({'status': 401, 'message': repr(e)})
@@ -236,6 +212,7 @@ class YouTubeView(View):
 
             try:
                 if account_id:
+                    file_name = f"{video_id}--{now.strftime('%Y-%m-%d--%H-%M-%S')}.mp4"
                     s3_path = f'{environment}/archive_data/{user_id}/YouTube/{account_id}/{file_name}'
                 else:
                     s3_path = f'YouTube/{file_name}'
@@ -249,7 +226,7 @@ class YouTubeView(View):
             except Exception as e:
                 return JsonResponse({'status': 402, 'message': repr(e)})
 
-            return JsonResponse({'status': 200, 'u': user_id, 'a': account_id, 'v': video_id, 'e': extension, 's': file_size, 't': now.strftime('%Y-%m-%d %H:%M:%S')})
+            return JsonResponse({'status': 200, 'u': user_id, 'a': account_id, 'v': video_id, 'e': '.mp4', 's': file_size, 't': now.strftime('%Y-%m-%d %H:%M:%S')})
 
         except Exception as e:
             return JsonResponse({'status': 400, 'message': repr(e)})
