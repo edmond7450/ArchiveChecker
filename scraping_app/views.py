@@ -190,7 +190,7 @@ class YouTubeView(View):
 
                     ydl_opts = {
                         'merge_output_format': 'mp4',
-                        'outtmpl': '%(id)s.%(ext)s'
+                        'outtmpl': os.path.join(output_path, '%(id)s.%(ext)s')
                     }
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         if file_size:
